@@ -1,9 +1,12 @@
 const {User} = require('../Models/User');
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
+
 router.get('/', async (req,res)=>{
     try {
-        let userList = await User.find();
+        let userList = await User.find().select('name email phone');
         if(!userList) return res.status(404).send("No Users Found in database!");
         res.status(201).send(userList);
     } catch (error) {
@@ -12,7 +15,7 @@ router.get('/', async (req,res)=>{
 });
 router.get('/:uid', async (req,res)=>{
     try {
-        let userList = await User.findById(req.params.uid);
+        let userList = await User.findById(req.params.uid).select('-passwordHash');
         if(!userList) res.status(404).send("The User Not Found!")
         res.status(201).send(userList);
     } catch (error) {
@@ -47,12 +50,13 @@ router.put('/:uid',(req,res) =>{
 });
 
     
-router.post('/',(req,res)=>
+router.post('/register',(req,res)=>
 {
+    let password = bcrypt.hashSync(req.body.password,'my-secret');
     let user = new User({
         name:req.body.name,
         email:req.body.email,
-        passwordHash:req.body.passwordHash,
+        passwordHash:password,
         street:req.body.street,
         city:req.body.city,
         zip:req.body.zip,
@@ -71,6 +75,25 @@ router.post('/',(req,res)=>
 });
 });
 
+router.post('/login',async (req,res)=>
+{
+    
+    let email = req.body.email;
+    try {
+    let user = await User.findOne({email}).select('email passwordHash');
+    if(!user)
+    {
+        res.status(404).json({success:false, message:"User Not found!"});
+    }
+    if(bcrypt.compareSync(req.body.password,user.passwordHash))
+    {
+        const token =  jwt.sign({userId:user.id},'secret');
+        res.status(200).json({token});
+    }
+    } catch (error) {
+        res.status(400).json({success:false,error})
+    }
+});
 
 router.delete('/:uid',(req,res) =>{    
     User.findByIdAndRemove(req.params.uid)
@@ -86,6 +109,17 @@ router.delete('/:uid',(req,res) =>{
     });
 
 });
+
+router.get(`/get/count`, async (req, res) =>{
+    const userCount = await User.countDocuments((count) => count)
+
+    if(!userCount) {
+        res.status(500).json({success: false})
+    } 
+    res.send({
+        userCount: userCount
+    });
+})
 
 module.exports = router;
     

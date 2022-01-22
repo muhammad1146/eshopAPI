@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const { User } = require('./User');
 const ordersSchema = mongoose.Schema({
-    orderItem:{
-        type:String
-    },
+    orderItems:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'OrderItem',
+        required:true
+    }],
     shippingAddress1:{
         type:String
     },
@@ -23,17 +25,20 @@ const ordersSchema = mongoose.Schema({
         type:String
     },
     status:{
-        type:String
+        type:String,
+        default:'Pending'
     },
     totalPrice:{
         type:Number
     },
     user:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:User
+        ref:'User',
+        required:true
     },
     dateOrdered:{
-        type:Date
+        type:Date,
+        default:Date.now
     }
 });
 

@@ -15,32 +15,36 @@ const userSchema = mongoose.Schema({
 
     },
     street:{
-        type:String
+        type:String,
+        default:''
     },
     city:{
         type:String,
-        required:true
-
+        default:''
     },
     zip:{
         type:Number,
-        required:true
-
+        default:''
     },
     country:{
         type:String,
-        required:true
-
+        default:''
     },
     phone:{
         type:String,
-        required:true
-
+        default:''
     },
     IsAdmin:{
         type:Boolean,
         default:false
     },
+});
+
+userSchema.virtual('id').get(function(){
+    return this._id.toHexString();
+});
+userSchema.set('toJSON',{
+    virtuals:true
 });
 
 exports.User = mongoose.model('User',userSchema);
